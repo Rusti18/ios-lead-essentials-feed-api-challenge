@@ -33,11 +33,11 @@ private struct Root: Decodable {
 	let items: [RemoteFeedImage]
 }
 
-internal enum FeedImageMapper {
+enum FeedImageMapper {
 	private static let OK_STATUS_CODE = 200
 
 	static func createFeedImages(from data: Data, and response: HTTPURLResponse) throws -> [FeedImage] {
-		guard response.statusCode == FeedImageMapper.OK_STATUS_CODE,
+		guard response.statusCode == OK_STATUS_CODE,
 		      let json = try? JSONDecoder().decode(Root.self, from: data) else {
 			throw RemoteFeedLoader.Error.invalidData
 		}
