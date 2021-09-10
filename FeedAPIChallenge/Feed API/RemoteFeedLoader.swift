@@ -19,17 +19,23 @@ public final class RemoteFeedLoader: FeedLoader {
 	}
 
 	public func load(completion: @escaping (FeedLoader.Result) -> Void) {
-		client.get(from: url) { result in
+		client.get(from: url) { [weak self] result in
+			guard let self = self else { return }
 			switch result {
-			case let .success((data, response)):
-				do {
-					let images = try FeedImageMapper.createFeedImages(from: data, and: response)
-					completion(.success(images))
-				} catch {
-					completion(.failure(Error.invalidData))
-				}
+			case let .success((data, response)): completion(self.map(data, response: response))
 			case .failure: completion(.failure(Error.connectivity))
 			}
+		}
+	}
+	
+	// MARK: - Helpers
+
+	private func map(_ data: Data, response: HTTPURLResponse) -> FeedLoader.Result {
+		do {
+			let images = try FeedImageMapper.createFeedImages(from: data, and: response)
+			return .success(images)
+		} catch {
+			return .failure(Error.invalidData)
 		}
 	}
 }
