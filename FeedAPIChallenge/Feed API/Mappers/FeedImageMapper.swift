@@ -9,10 +9,24 @@
 import Foundation
 
 private struct RemoteFeedImage: Decodable {
-	let imageId: String
-	let imageDesc: String?
-	let imageLoc: String?
-	let imageUrl: URL
+	let id: UUID
+	let description: String?
+	let location: String?
+	let url: URL
+
+	private enum CodingKeys: String, CodingKey {
+		case id = "image_id"
+		case description = "image_desc"
+		case location = "image_loc"
+		case url = "image_url"
+	}
+
+	var feedImage: FeedImage {
+		return FeedImage(id: id,
+		                 description: description,
+		                 location: location,
+		                 url: url)
+	}
 }
 
 private struct Root: Decodable {
@@ -20,12 +34,14 @@ private struct Root: Decodable {
 }
 
 internal enum FeedImageMapper {
+	private static let OK_STATUS_CODE = 200
+
 	static func createFeedImages(from data: Data, and response: HTTPURLResponse) throws -> [FeedImage] {
-		guard response.statusCode == 200,
-		      let _ = try? JSONDecoder().decode(Root.self, from: data) else {
+		guard response.statusCode == FeedImageMapper.OK_STATUS_CODE,
+		      let json = try? JSONDecoder().decode(Root.self, from: data) else {
 			throw RemoteFeedLoader.Error.invalidData
 		}
 
-		return []
+		return json.items.map { $0.feedImage }
 	}
 }
